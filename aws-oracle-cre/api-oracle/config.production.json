@@ -7,6 +7,7 @@
       "chainName": "ethereum-testnet-sepolia",
       "priceFeedAddress": "YOUR_PRICE_FEED_CONTRACT_ADDRESS",
       "collateralizationMonitorAddress": "YOUR_COLLATERALIZATION_MONITOR_ADDRESS",
+      "forwarderAddress": "0xF8344CFd5c43616a4366C34E3EEE75af79a74482",
       "gasLimit": 500000
     }
   ]

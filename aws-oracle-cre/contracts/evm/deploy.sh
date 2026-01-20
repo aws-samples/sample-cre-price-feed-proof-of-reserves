@@ -9,6 +9,7 @@ set -e
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}=== Contract Deployment Script ===${NC}"
@@ -24,6 +25,16 @@ if [ -z "$SEPOLIA_RPC_URL" ]; then
     echo -e "${RED}Warning: SEPOLIA_RPC_URL environment variable is not set${NC}"
     echo "Using default public Sepolia RPC..."
     export SEPOLIA_RPC_URL="https://ethereum-sepolia-rpc.publicnode.com"
+fi
+
+# Forwarder addresses for Sepolia
+# MockForwarder (simulation): 0x15fC6ae953E024d975e77382eEeC56A9101f9F88
+# KeystoneForwarder (production): 0xF8344CFd5c43616a4366C34E3EEE75af79a74482
+if [ -z "$FORWARDER_ADDRESS" ]; then
+    # Default to MockForwarder for staging/simulation
+    export FORWARDER_ADDRESS="0x15fC6ae953E024d975e77382eEeC56A9101f9F88"
+    echo -e "${YELLOW}Using default MockForwarder address: $FORWARDER_ADDRESS${NC}"
+    echo -e "${YELLOW}For production, set: export FORWARDER_ADDRESS=0xF8344CFd5c43616a4366C34E3EEE75af79a74482${NC}"
 fi
 
 # Check if forge is installed
@@ -44,6 +55,7 @@ if [ $PRIORITY_FEE -lt 1000000000 ]; then
 fi
 MAX_FEE=$((BASE_FEE + PRIORITY_FEE))
 echo "Using base fee: $BASE_FEE wei, priority fee: $PRIORITY_FEE wei, max fee: $MAX_FEE wei"
+echo "Using forwarder address: $FORWARDER_ADDRESS"
 
 echo -e "${GREEN}Step 3: Deploying PriceFeed contract${NC}"
 PRICE_FEED_OUTPUT=$(forge script script/DeployPriceFeed.s.sol:DeployPriceFeed \
@@ -88,6 +100,7 @@ fi
 echo -e "${GREEN}CollateralizationMonitor deployed at: $MONITOR_ADDRESS${NC}"
 
 echo -e "${BLUE}=== Deployment Summary ===${NC}"
+echo -e "Forwarder: ${GREEN}$FORWARDER_ADDRESS${NC}"
 echo -e "PriceFeed: ${GREEN}$PRICE_FEED_ADDRESS${NC}"
 echo -e "CollateralizationMonitor: ${GREEN}$MONITOR_ADDRESS${NC}"
 
@@ -98,6 +111,7 @@ CONFIG_FILE="../../api-oracle/config.staging.json"
 if [ -f "$CONFIG_FILE" ]; then
     sed -i.bak "s|\"priceFeedAddress\": \"[^\"]*\"|\"priceFeedAddress\": \"$PRICE_FEED_ADDRESS\"|" "$CONFIG_FILE"
     sed -i.bak "s|\"collateralizationMonitorAddress\": \"[^\"]*\"|\"collateralizationMonitorAddress\": \"$MONITOR_ADDRESS\"|" "$CONFIG_FILE"
+    sed -i.bak "s|\"forwarderAddress\": \"[^\"]*\"|\"forwarderAddress\": \"$FORWARDER_ADDRESS\"|" "$CONFIG_FILE"
     rm -f "${CONFIG_FILE}.bak"
     echo -e "${GREEN}Updated config.staging.json with deployed addresses${NC}"
 else
@@ -110,11 +124,13 @@ echo ""
 echo -e "${GREEN}forge verify-contract $PRICE_FEED_ADDRESS \\${NC}"
 echo -e "${GREEN}  src/PriceFeed.sol:PriceFeed \\${NC}"
 echo -e "${GREEN}  --chain-id 11155111 \\${NC}"
+echo -e "${GREEN}  --constructor-args \$(cast abi-encode \"constructor(address)\" $FORWARDER_ADDRESS) \\${NC}"
 echo -e "${GREEN}  --etherscan-api-key \$ETHERSCAN_API_KEY${NC}"
 echo ""
 echo -e "${GREEN}forge verify-contract $MONITOR_ADDRESS \\${NC}"
 echo -e "${GREEN}  src/CollateralizationMonitor.sol:CollateralizationMonitor \\${NC}"
 echo -e "${GREEN}  --chain-id 11155111 \\${NC}"
+echo -e "${GREEN}  --constructor-args \$(cast abi-encode \"constructor(address)\" $FORWARDER_ADDRESS) \\${NC}"
 echo -e "${GREEN}  --etherscan-api-key \$ETHERSCAN_API_KEY${NC}"
 
 echo ""
