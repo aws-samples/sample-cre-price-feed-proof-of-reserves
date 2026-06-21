@@ -1,4 +1,4 @@
-# Integrating AWS with Chainlink Runtime Environment (CRE) Workflows
+# Digital Asset Price Feeds & Proof of Reserves (PoR): Integrating AWS with Chainlink Runtime Environment (CRE) Workflows 
 
 **Authored by: Simon Goldberg**
 
