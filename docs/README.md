@@ -2,6 +2,8 @@
 
 **Authored by: Simon Goldberg**
 
+> This sample is part of the [AWS Digital Asset Samples](https://aws-samples.github.io/aws-digital-asset-samples/) collection.
+
 ## Overview
 
 This project demonstrates workflows using the Chainlink Runtime Environment to fetch data from AWS serverless APIs and write results to Ethereum smart contracts. 
